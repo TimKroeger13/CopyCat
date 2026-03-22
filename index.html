@@ -6,17 +6,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 </head>
 <body>
-    <button id="btn" onclick="toggle()"
-        style="width:150px; height:150px; border-radius:50%; background:red; font-size:20px; cursor:pointer;">
-        ●
+    <button type="button"id="btn" onclick="toggle()"
+        style="width:150px; height:100px; background:rgb(22, 155, 144); font-size:20px; cursor:pointer;">
+            Click me
     </button>
+
+
+    
 
     <script>
         let isGreen = false;
 
         // Verbindung zum Hub aufbauen
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5000/buttonHub")
+            .withUrl("http://localhost:5142/buttonHub")
             .build();
 
         // Event vom Server empfangen

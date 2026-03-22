@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CopyCat.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+250c9b26b9a2d480ba701c90667b5963af5e7069")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d27a75de50fa93c4b21cea3ec6f69c31b6f51ac2")]
 [assembly: System.Reflection.AssemblyProductAttribute("CopyCat.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CopyCat.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
