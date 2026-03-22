@@ -1,0 +1,4 @@
+git pull
+docker build -t copycat .
+docker stop copycat && docker rm copycat
+docker run -d -p 8080:8080 --name copycat copycat
