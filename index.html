@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CopyCat Test</title>
+    <!-- SignalR Client Library direkt von CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+</head>
+<body>
+    <button id="btn" onclick="toggle()"
+        style="width:150px; height:150px; border-radius:50%; background:red; font-size:20px; cursor:pointer;">
+        ●
+    </button>
+
+    <script>
+        let isGreen = false;
+
+        // Verbindung zum Hub aufbauen
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5000/buttonHub")
+            .build();
+
+        // Event vom Server empfangen
+        connection.on("ButtonToggled", (green) => {
+            isGreen = green;
+            document.getElementById("btn").style.background = green ? "green" : "red";
+        });
+
+        connection.start().catch(err => console.error(err));
+
+        // Button gedrückt → an Server schicken
+        function toggle() {
+            isGreen = !isGreen;
+            connection.invoke("ToggleButton", isGreen);
+        }
+    </script>
+</body>
+</html>
