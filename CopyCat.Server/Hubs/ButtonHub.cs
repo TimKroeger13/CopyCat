@@ -1,6 +1,12 @@
 using Microsoft.AspNetCore.SignalR;
 
-public class ButtonHub : Hub
+public interface IButtonHub
+{
+    Task OnConnectedAsync();
+    Task ToggleButton(bool isGreen);
+}
+
+public class ButtonHub : Hub, IButtonHub
 {
     // Statisch = geteilt zwischen allen Verbindungen
     private static bool _isGreen = false;
