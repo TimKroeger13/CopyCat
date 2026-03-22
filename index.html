@@ -8,21 +8,27 @@
 <body>
     <button type="button"id="btn" onclick="toggle()"
         style="width:150px; height:100px; background:rgb(255, 255, 255); font-size:20px; cursor:pointer;">
-            Click me
+             
     </button>
 
     <script>
         let isGreen = false;
 
         // Verbindung zum Hub aufbauen
+        const serverUrl = window.location.hostname === "localhost" || 
+                        window.location.hostname === "127.0.0.1"
+            ? "http://localhost:5142"      // lokal
+            : "https://tkroeger.com/";   // production
+
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5142/buttonHub")
+            .withUrl(`${serverUrl}/buttonHub`)
             .build();
 
         // Event vom Server empfangen
         connection.on("ButtonToggled", (green) => {
-            isGreen = green;
-            document.getElementById("btn").style.background = green ? "green" : "red";
+            const btn = document.getElementById("btn");
+            btn.style.background = green ? "green" : "red";
+            btn.innerHTML = green ? "Green" : "Red";
         });
 
         connection.start().catch(err => console.error(err));

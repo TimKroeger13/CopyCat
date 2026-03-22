@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Server",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/CopyCat.Server/bin/Debug/net9.0/CopyCat.Server.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/CopyCat.Server",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        },
+        {
+            "name": "WebClient",
+            "type": "pwa-msedge",
+            "request": "launch",
+            "url": "http://127.0.0.1:5500/index.html",
+            "presentation": {
+                "hidden": false
+            }
+        }
+    ]
+}
