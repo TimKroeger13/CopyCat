@@ -1,4 +1,8 @@
 git pull
 docker build -t copycat .
 docker stop copycat && docker rm copycat
-docker run -d -p 8080:8080 --name copycat copycat
+docker run -d -p 3836:8080 --name copycat copycat
+
+
+sudo nginx -t
+sudo nginx -s reload
