@@ -1,2 +1,2 @@
-CopyCatServer/bin
-CopyCatServer/obj
+**/bin/
+**/obj/
