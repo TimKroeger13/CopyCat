@@ -1,2 +1,2 @@
-# CopyCat
+# Draw together
 Online Game
