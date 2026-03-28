@@ -59,12 +59,13 @@ function clearCursor() {
 // --- SignalR ---
 const serverUrl = window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5142"
-    : "https://tkroeger.com/button";
+    ? "http://localhost:5142/drawHub"
+    : "https://tkroeger.com/drawHub";
 
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${serverUrl}/drawHub`)
+    .withUrl(serverUrl)
     .build();
+
 
 connection.on("ReceiveLine", (stroke) => {
     allStrokes.push(stroke);
