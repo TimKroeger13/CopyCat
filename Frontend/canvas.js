@@ -1,12 +1,16 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// Canvas Pixel-Größe = echte Größe des Elements
+let myRole = null;
+let currentTool = "pen"; // "pen" | "eraser"
+
+// --- Canvas Resize ---
 function resizeCanvas() {
-    canvas.width = canvas.offsetWidth;
+    // Striche merken, Größe ändern, neu zeichnen
+    canvas.width  = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+    redrawAll();
 }
-resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 // --- SignalR ---
@@ -19,40 +23,95 @@ const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${serverUrl}/drawHub`)
     .build();
 
-// Linie empfangen (relative Koordinaten → absolute Pixel)
-connection.on("ReceiveLine", (x0, y0, x1, y1) => {
-    drawLine(
-        x0 * canvas.width,
-        y0 * canvas.height,
-        x1 * canvas.width,
-        y1 * canvas.height
-    );
+connection.on("ReceiveLine", (x0, y0, x1, y1, role, isEraser) => {
+    allStrokes.push({ x0, y0, x1, y1, role, isEraser });
+    renderStroke({ x0, y0, x1, y1, role, isEraser });
 });
 
-connection.on("CanvasCleared", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+connection.on("FullRedraw", (strokes) => {
+    allStrokes = strokes;
+    redrawAll();
+});
+
+connection.on("NewGameVoteUpdate", (votes) => {
+    const hint = document.getElementById("newGameHint");
+    if (votes.length === 0) {
+        hint.textContent = "";
+    } else {
+        hint.textContent = `⏳ Waiting for ${votes.includes("player1") ? "Player 2" : "Player 1"}...`;
+    }
 });
 
 connection.start().catch(err => console.error(err));
 
-// --- Zeichnen ---
-function drawLine(x0, y0, x1, y1) {
+// --- Stroke Storage ---
+let allStrokes = [];
+
+function getColor(strokeRole, isEraser) {
+    if (isEraser) return "white";
+    if (!myRole || myRole === "guesser") return "black";
+    if (strokeRole === myRole) return "black";
+    return "red";
+}
+
+function renderStroke(s) {
     ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
+    ctx.moveTo(s.x0 * canvas.width,  s.y0 * canvas.height);
+    ctx.lineTo(s.x1 * canvas.width,  s.y1 * canvas.height);
+    ctx.strokeStyle = getColor(s.role, s.isEraser);
+    ctx.lineWidth   = s.isEraser ? 20 : 3;
+    ctx.lineCap     = "round";
     ctx.stroke();
 }
 
+function redrawAll() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    allStrokes.forEach(renderStroke);
+}
+
+// --- Role Selection ---
+function selectRole(role) {
+    myRole = role;
+    document.getElementById("roleScreen").style.display = "none";
+    document.getElementById("roleLabel").textContent =
+        role === "player1" ? "✏️ Player 1" :
+        role === "player2" ? "✏️ Player 2" : "🔍 Guesser";
+
+    // Guesser kann nicht zeichnen
+    canvas.style.pointerEvents = role === "guesser" ? "none" : "auto";
+
+    // Farben neu rendern basierend auf neuer Rolle
+    resizeCanvas();
+}
+
+function changeRole() {
+    document.getElementById("roleScreen").style.display = "flex";
+}
+
+// --- Tools ---
+function setTool(tool) {
+    currentTool = tool;
+    canvas.className = tool;
+    document.getElementById("btnPen").classList.toggle("active", tool === "pen");
+    document.getElementById("btnEraser").classList.toggle("active", tool === "eraser");
+}
+
+function clearMine() {
+    if (!myRole || myRole === "guesser") return;
+    connection.invoke("ClearMyDrawing", myRole);
+}
+
+function voteNewGame() {
+    if (!myRole || myRole === "guesser") return;
+    connection.invoke("VoteNewGame", myRole);
+}
+
+// --- Drawing ---
 let isDrawing = false;
-let lastX = 0;
-let lastY = 0;
+let lastX = 0, lastY = 0;
 
 function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    // Touch oder Mouse
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
@@ -62,6 +121,7 @@ function getPos(e) {
 }
 
 function startDraw(e) {
+    if (!myRole || myRole === "guesser") return;
     isDrawing = true;
     const pos = getPos(e);
     lastX = pos.x;
@@ -72,33 +132,23 @@ function draw(e) {
     if (!isDrawing) return;
     const pos = getPos(e);
 
-    // Absolut → relativ (0-1) damit es auf allen Screens gleich aussieht
     const x0 = lastX / canvas.width;
     const y0 = lastY / canvas.height;
-    const x1 = pos.x / canvas.width;
-    const y1 = pos.y / canvas.height;
+    const x1 = pos.x  / canvas.width;
+    const y1 = pos.y  / canvas.height;
 
-    connection.invoke("DrawLine", x0, y0, x1, y1);
+    connection.invoke("DrawLine", x0, y0, x1, y1, myRole, currentTool === "eraser");
 
     lastX = pos.x;
     lastY = pos.y;
 }
 
-function stopDraw() {
-    isDrawing = false;
-}
+function stopDraw() { isDrawing = false; }
 
-// Mouse Events (Desktop)
-canvas.addEventListener("mousedown", startDraw);
-canvas.addEventListener("mousemove", draw);
-canvas.addEventListener("mouseup", stopDraw);
+canvas.addEventListener("mousedown",  startDraw);
+canvas.addEventListener("mousemove",  draw);
+canvas.addEventListener("mouseup",    stopDraw);
 canvas.addEventListener("mouseleave", stopDraw);
-
-// Touch Events (Mobile)
 canvas.addEventListener("touchstart", startDraw);
-canvas.addEventListener("touchmove", draw);
-canvas.addEventListener("touchend", stopDraw);
-
-function clearCanvas() {
-    connection.invoke("ClearCanvas");
-}
+canvas.addEventListener("touchmove",  draw);
+canvas.addEventListener("touchend",   stopDraw);

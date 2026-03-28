@@ -1,15 +1,77 @@
- * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             display: flex;
             flex-direction: column;
-            height: 100dvh;        /* dvh = funktioniert auf Mobile besser als vh */
+            height: 100dvh;
             background: #1a1a2e;
+            font-family: sans-serif;
             overflow: hidden;
         }
 
+        /* --- Role Selection Overlay --- */
+        #roleScreen {
+            position: fixed;
+            inset: 0;
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        #roleScreen h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .roleBtn {
+            width: 220px;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+
+        .roleBtn.player1 { background: #e94560; }
+        .roleBtn.player2 { background: #0f3460; }
+        .roleBtn.guesser { background: #533483; }
+
+        /* --- Top Bar --- */
+        #topBar {
+            height: 50px;
+            background: #16213e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            color: white;
+        }
+
+        #roleLabel {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        #topBar button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #533483;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* --- Canvas --- */
         #canvasWrapper {
-            flex: 1;               /* nimmt allen Platz bis zu den Controls */
+            flex: 1;
             position: relative;
         }
 
@@ -19,25 +81,47 @@
             width: 100%;
             height: 100%;
             background: white;
-            cursor: crosshair;
-            touch-action: none;    /* verhindert scrollen beim zeichnen auf mobile */
+            touch-action: none;
         }
 
+        canvas.pen    { cursor: crosshair; }
+        canvas.eraser { cursor: cell; }
+
+        /* --- Bottom Controls --- */
         #controls {
-            height: 80px;
+            height: 70px;
             background: #16213e;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 0 8px;
         }
 
         #controls button {
-            padding: 10px 24px;
+            padding: 8px 16px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 0.9rem;
             cursor: pointer;
-            background: #e94560;
             color: white;
+            font-weight: bold;
+            opacity: 0.7;
+            transition: opacity 0.1s, outline 0.1s;
+        }
+
+        #controls button.active { opacity: 1; outline: 2px solid white; }
+        #controls button:not(.active):hover { opacity: 0.9; }
+
+        #btnPen       { background: #1a1a2e; }
+        #btnEraser    { background: #1a1a2e; }
+        #btnClearMine { background: #c0392b; }
+        #btnNewGame   { background: #27ae60; }
+
+        #newGameHint {
+            color: #aaa;
+            font-size: 0.75rem;
+            text-align: center;
+            padding: 2px 8px;
         }

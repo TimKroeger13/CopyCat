@@ -1,20 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CopyCat - Canvas</title>
+    <title>CopyCat</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <link rel="stylesheet" href="canvas.css">
 </head>
 <body>
+
+    <!-- Role Selection -->
+    <div id="roleScreen">
+        <h1>CopyCat 🐱</h1>
+        <button class="roleBtn player1" onclick="selectRole('player1')">✏️ Player 1</button>
+        <button class="roleBtn player2" onclick="selectRole('player2')">✏️ Player 2</button>
+        <button class="roleBtn guesser" onclick="selectRole('guesser')">🔍 Guesser</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="topBar">
+        <span id="roleLabel">-</span>
+        <button onclick="changeRole()">Rolle wechseln</button>
+    </div>
+
     <div id="canvasWrapper">
-        <canvas id="canvas"></canvas>
+        <canvas id="canvas" class="pen"></canvas>
     </div>
 
     <div id="controls">
-        <button onclick="clearCanvas()">🗑️ Clear</button>
+        <button id="btnPen"       class="active"  onclick="setTool('pen')">🖊️ Pen</button>
+        <button id="btnEraser"                    onclick="setTool('eraser')">🧹 Eraser</button>
+        <button id="btnClearMine"                 onclick="clearMine()">🗑️ Clear Mine</button>
+        <button id="btnNewGame"                   onclick="voteNewGame()">🆕 New Game</button>
+        <div id="newGameHint"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script src="canvas.js"></script>
 </body>
 </html>
