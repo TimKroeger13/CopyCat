@@ -7,7 +7,6 @@
 </head>
 <body>
 
-    <!-- Role Selection -->
     <div id="roleScreen">
         <h1>CopyCat 🐱</h1>
         <button class="roleBtn player1" onclick="selectRole('player1')">✏️ Player 1</button>
@@ -15,9 +14,12 @@
         <button class="roleBtn guesser" onclick="selectRole('guesser')">🔍 Guesser</button>
     </div>
 
-    <!-- Game Screen -->
     <div id="topBar">
         <span id="roleLabel">-</span>
+        <div id="inkWrapper" style="display:none">
+            <span id="inkLabel">Ink: 300 / 300</span>
+            <div id="inkBarBg"><div id="inkBar"></div></div>
+        </div>
         <button onclick="changeRole()">Rolle wechseln</button>
     </div>
 
@@ -25,11 +27,11 @@
         <canvas id="canvas" class="pen"></canvas>
     </div>
 
-    <div id="controls">
-        <button id="btnPen"       class="active"  onclick="setTool('pen')">🖊️ Pen</button>
-        <button id="btnEraser"                    onclick="setTool('eraser')">🧹 Eraser</button>
-        <button id="btnClearMine"                 onclick="clearMine()">🗑️ Clear Mine</button>
-        <button id="btnNewGame"                   onclick="voteNewGame()">🆕 New Game</button>
+    <div id="controls" style="position:relative">
+        <button id="btnPen"       class="active" onclick="setTool('pen')">🖊️ Pen</button>
+        <button id="btnEraser"                   onclick="setTool('eraser')">🧹 Eraser</button>
+        <button id="btnClearMine"                onclick="clearMine()">🗑️ Clear Mine</button>
+        <button id="btnNewGame"                  onclick="voteNewGame()">🆕 New Game</button>
         <div id="newGameHint"></div>
     </div>
 
