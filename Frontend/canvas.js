@@ -1,19 +1,60 @@
-const canvas  = document.getElementById("canvas");
-const ctx     = canvas.getContext("2d");
-const MAX_INK = 10000;
-const ERASER_RADIUS = 20; // Pixel Radius des Erasers
+const canvas       = document.getElementById("canvas");
+const ctx          = canvas.getContext("2d");
+const cursorCanvas = document.getElementById("cursorCanvas");
+const cursorCtx    = cursorCanvas.getContext("2d");
+
+const MAX_INK      = 10000;
+const ERASER_RADIUS = 20;
 
 let myRole      = null;
 let currentTool = "pen";
 let allStrokes  = [];
+let penSize     = 7;      // ← Pen Größe, anpassbar
 
 // --- Canvas Resize ---
 function resizeCanvas() {
-    canvas.width  = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width        = canvas.offsetWidth;
+    canvas.height       = canvas.offsetHeight;
+    cursorCanvas.width  = cursorCanvas.offsetWidth;
+    cursorCanvas.height = cursorCanvas.offsetHeight;
     redrawAll();
 }
 window.addEventListener("resize", resizeCanvas);
+
+// --- Cursor Overlay ---
+function drawCursor(x, y) {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+
+    if (currentTool === "eraser") {
+        // Kreis zeigt Eraser Radius
+        cursorCtx.beginPath();
+        cursorCtx.arc(x, y, ERASER_RADIUS, 0, Math.PI * 2);
+        cursorCtx.strokeStyle = "rgba(0,0,0,0.6)";
+        cursorCtx.lineWidth = 1.5;
+        cursorCtx.stroke();
+        // Kleines Kreuz in der Mitte
+        cursorCtx.beginPath();
+        cursorCtx.moveTo(x - 4, y); cursorCtx.lineTo(x + 4, y);
+        cursorCtx.moveTo(x, y - 4); cursorCtx.lineTo(x, y + 4);
+        cursorCtx.stroke();
+    } else {
+        // Pen: gefüllter Punkt in Pen-Größe
+        cursorCtx.beginPath();
+        cursorCtx.arc(x, y, penSize / 2, 0, Math.PI * 2);
+        cursorCtx.fillStyle = "rgba(0,0,0,0.7)";
+        cursorCtx.fill();
+        // Kleiner Ring drum
+        cursorCtx.beginPath();
+        cursorCtx.arc(x, y, penSize / 2 + 3, 0, Math.PI * 2);
+        cursorCtx.strokeStyle = "rgba(0,0,0,0.3)";
+        cursorCtx.lineWidth = 1;
+        cursorCtx.stroke();
+    }
+}
+
+function clearCursor() {
+    cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
+}
 
 // --- SignalR ---
 const serverUrl = window.location.hostname === "localhost" ||
@@ -43,7 +84,6 @@ connection.on("InkUpdate", (remaining, maxInk) => {
 connection.on("NewGameVoteUpdate", (votes) => {
     const myVoteActive = votes.includes(myRole);
     document.getElementById("btnNewGame").classList.toggle("active", myVoteActive);
-
     const hint = document.getElementById("newGameHint");
     if (votes.length === 0) {
         hint.textContent = "";
@@ -70,7 +110,7 @@ function updateInkFromStrokes() {
     const used = allStrokes
         .filter(s => s.role === myRole)
         .reduce((sum, s) => sum + (s.length ?? 0), 0);
-    updateInkBar(10000 - used, 10000);
+    updateInkBar(MAX_INK - used, MAX_INK);
 }
 
 // --- Render ---
@@ -84,7 +124,7 @@ function renderStroke(s) {
     ctx.moveTo(s.x0 * canvas.width,  s.y0 * canvas.height);
     ctx.lineTo(s.x1 * canvas.width,  s.y1 * canvas.height);
     ctx.strokeStyle = getColor(s.role);
-    ctx.lineWidth   = 3;
+    ctx.lineWidth   = penSize;
     ctx.lineCap     = "round";
     ctx.stroke();
 }
@@ -94,16 +134,14 @@ function redrawAll() {
     allStrokes.forEach(renderStroke);
 }
 
-// --- Eraser: findet Striche im Radius ---
+// --- Eraser ---
 function findStrokesInRadius(px, py) {
     return allStrokes
         .filter(s => s.role === myRole)
         .filter(s => {
-            // Mittelpunkt des Segments prüfen
             const mx = ((s.x0 + s.x1) / 2) * canvas.width;
             const my = ((s.y0 + s.y1) / 2) * canvas.height;
-            const dist = Math.hypot(mx - px, my - py);
-            return dist < ERASER_RADIUS;
+            return Math.hypot(mx - px, my - py) < ERASER_RADIUS;
         })
         .map(s => s.id);
 }
@@ -118,11 +156,11 @@ function selectRole(role) {
 
     const isPlayer = role !== "guesser";
     canvas.style.pointerEvents = isPlayer ? "auto" : "none";
-    document.getElementById("inkWrapper").style.display = isPlayer ? "flex" : "none";
-    document.getElementById("btnPen").style.display       = isPlayer ? "" : "none";
-    document.getElementById("btnEraser").style.display    = isPlayer ? "" : "none";
-    document.getElementById("btnClearMine").style.display = isPlayer ? "" : "none";
-    document.getElementById("btnNewGame").style.display   = isPlayer ? "" : "none";
+    document.getElementById("inkWrapper").style.display    = isPlayer ? "flex" : "none";
+    document.getElementById("btnPen").style.display        = isPlayer ? "" : "none";
+    document.getElementById("btnEraser").style.display     = isPlayer ? "" : "none";
+    document.getElementById("btnClearMine").style.display  = isPlayer ? "" : "none";
+    document.getElementById("btnNewGame").style.display    = isPlayer ? "" : "none";
 
     resizeCanvas();
     updateInkFromStrokes();
@@ -140,6 +178,11 @@ function setTool(tool) {
     document.getElementById("btnEraser").classList.toggle("active", tool === "eraser");
 }
 
+// Pen Größe ändern – ruf das aus HTML auf oder per Konsole zum Testen
+function setPenSize(size) {
+    penSize = size;
+}
+
 function clearMine() {
     if (!myRole || myRole === "guesser") return;
     connection.invoke("ClearMyDrawing", myRole);
@@ -155,7 +198,7 @@ let isDrawing = false;
 let lastX = 0, lastY = 0;
 
 function getPos(e) {
-    const rect   = canvas.getBoundingClientRect();
+    const rect    = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return { x: clientX - rect.left, y: clientY - rect.top };
@@ -163,6 +206,7 @@ function getPos(e) {
 
 function startDraw(e) {
     if (!myRole || myRole === "guesser") return;
+    if (e.button !== undefined && e.button !== 0) return; // ← Nur Linksklick
     isDrawing = true;
     const pos = getPos(e);
     lastX = pos.x;
@@ -170,21 +214,30 @@ function startDraw(e) {
 }
 
 function draw(e) {
-    if (!isDrawing) return;
     const pos = getPos(e);
 
-    if (currentTool === "eraser") {
-        // Erase: Striche im Radius finden und entfernen
+    if (myRole && myRole !== "guesser") {
+        drawCursor(pos.x, pos.y);
+    }
+
+    // Rechte Maustaste gehalten = Eraser unabhängig vom Tool
+    if (e.buttons === 2) {
+        if (!myRole || myRole === "guesser") return;
         const ids = findStrokesInRadius(pos.x, pos.y);
-        if (ids.length > 0) {
-            connection.invoke("EraseStrokes", ids, myRole);
-        }
+        if (ids.length > 0) connection.invoke("EraseStrokes", ids, myRole);
+        return; // ← Verhindert dass danach Pen-Logik läuft
+    }
+
+    if (!isDrawing) return;
+
+    if (currentTool === "eraser") {
+        const ids = findStrokesInRadius(pos.x, pos.y);
+        if (ids.length > 0) connection.invoke("EraseStrokes", ids, myRole);
     } else {
-        // Pen: Ink prüfen
         const used = allStrokes
             .filter(s => s.role === myRole)
             .reduce((sum, s) => sum + (s.length ?? 0), 0);
-        if (used >= 10000) return;
+        if (used >= MAX_INK) return;
 
         const x0 = lastX / canvas.width;
         const y0 = lastY / canvas.height;
@@ -199,31 +252,12 @@ function draw(e) {
 
 function stopDraw() { isDrawing = false; }
 
-canvas.addEventListener("mousedown",  startDraw);
-canvas.addEventListener("mousemove",  draw);
-canvas.addEventListener("mouseup",    stopDraw);
-canvas.addEventListener("mouseleave", stopDraw);
+canvas.addEventListener("mousedown",   startDraw);
+canvas.addEventListener("mousemove",   draw);
+canvas.addEventListener("mouseup",     stopDraw);
+canvas.addEventListener("mouseleave",  (e) => { stopDraw(); clearCursor(); });
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
 canvas.addEventListener("touchstart", e => { e.preventDefault(); startDraw(e); }, { passive: false });
 canvas.addEventListener("touchmove",  e => { e.preventDefault(); draw(e); },      { passive: false });
 canvas.addEventListener("touchend",   stopDraw);
-
-canvas.addEventListener("contextmenu", (e) => {
-    e.preventDefault(); // Verhindert das Browser-Kontextmenü
-
-    if (!myRole || myRole === "guesser") return;
-
-    const pos = getPos(e);
-    const ids = findStrokesInRadius(pos.x, pos.y);
-    if (ids.length > 0) {
-        connection.invoke("EraseStrokes", ids, myRole);
-    }
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (e.buttons === 2) { // Rechte Maustaste gehalten
-        if (!myRole || myRole === "guesser") return;
-        const pos = getPos(e);
-        const ids = findStrokesInRadius(pos.x, pos.y);
-        if (ids.length > 0) connection.invoke("EraseStrokes", ids, myRole);
-    }
-});
