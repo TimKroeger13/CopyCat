@@ -1,3 +1,5 @@
+//git clone htt..
+
 git pull
 docker build -t copycat .
 docker stop copycat && docker rm copycat

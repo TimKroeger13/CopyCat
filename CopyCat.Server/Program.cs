@@ -1,6 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
+builder.Services.AddTransient<IDrawHub, DrawHub>();
 builder.Services.AddTransient<IButtonHub, ButtonHub>();
 builder.Services.AddCors(options =>
 {
@@ -14,4 +15,5 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 app.UseCors();
 app.MapHub<ButtonHub>("/buttonHub");
+app.MapHub<DrawHub>("/drawHub");
 app.Run();
