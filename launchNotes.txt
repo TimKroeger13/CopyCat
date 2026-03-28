@@ -19,13 +19,18 @@ location /drawtogether {
     try_files $uri $uri/ /canvas.html;
 }
 
-location /drawtogether/ {
-    alias /home/jerry/CopyCat/CopyCat/Frontend/;
-    try_files $uri $uri/ canvas.html;
-}
-
 
 chmod o+x /home/jerry
 chmod o+x /home/jerry/CopyCat
 chmod o+x /home/jerry/CopyCat/CopyCat
 chmod o+x /home/jerry/CopyCat/CopyCat/Frontend
+
+
+
+
+
+
+drawtogether
+
+
+

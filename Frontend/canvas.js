@@ -69,7 +69,10 @@ const connection = new signalR.HubConnectionBuilder()
 
 connection.on("ReceiveLine", (stroke) => {
     allStrokes.push(stroke);
-    renderStroke(stroke);
+    // Nur fremde Striche rendern – eigene wurden bereits lokal gezeichnet
+    if (stroke.role !== myRole) {
+        renderStroke(stroke);
+    }
 });
 
 connection.on("FullRedraw", (strokes) => {
@@ -221,12 +224,11 @@ function draw(e) {
         drawCursor(pos.x, pos.y);
     }
 
-    // Rechte Maustaste gehalten = Eraser unabhängig vom Tool
     if (e.buttons === 2) {
         if (!myRole || myRole === "guesser") return;
         const ids = findStrokesInRadius(pos.x, pos.y);
         if (ids.length > 0) connection.invoke("EraseStrokes", ids, myRole);
-        return; // ← Verhindert dass danach Pen-Logik läuft
+        return;
     }
 
     if (!isDrawing) return;
@@ -244,6 +246,12 @@ function draw(e) {
         const y0 = lastY / canvas.height;
         const x1 = pos.x  / canvas.width;
         const y1 = pos.y  / canvas.height;
+
+        // ← SOFORT lokal rendern
+        const tempStroke = { x0, y0, x1, y1, role: myRole, length: 0 };
+        renderStroke(tempStroke);
+
+        // ← Parallel an Server schicken
         connection.invoke("DrawLine", x0, y0, x1, y1, myRole);
     }
 

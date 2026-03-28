@@ -216,3 +216,92 @@ canvas.eraser {
 }
 canvas.pen    { cursor: none; }
 canvas.eraser { cursor: none; }
+
+
+/* --- Controls --- */
+#controls {
+    height: 80px;          /* größer */
+    background: #16213e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 8px;
+    flex-wrap: wrap;
+}
+
+#controls button {
+    padding: 12px 16px;    /* größere Touch-Targets */
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;       /* größer */
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    opacity: 0.6;
+    min-width: 44px;       /* Apple empfiehlt min 44x44px für Touch */
+    min-height: 44px;
+    transition: opacity 0.1s, outline 0.1s;
+}
+
+/* --- Top Bar --- */
+#topBar {
+    height: 60px;          /* etwas größer */
+    background: #16213e;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    color: white;
+    gap: 12px;
+}
+
+#roleLabel {
+    font-size: 1.1rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#topBar > button {
+    padding: 10px 16px;    /* größer */
+    min-height: 44px;
+    border: none;
+    border-radius: 8px;
+    background: #533483;
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+/* --- Role Screen --- */
+.roleBtn {
+    width: 260px;          /* breiter */
+    padding: 20px;         /* mehr Padding */
+    border: none;
+    border-radius: 12px;
+    font-size: 1.4rem;     /* größer */
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    min-height: 64px;
+}
+
+#roleScreen h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 24px;
+}
+
+/* Ink Label größer */
+#inkLabel {
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+#inkBarBg {
+    height: 12px;          /* dicker */
+    background: #333;
+    border-radius: 5px;
+    overflow: hidden;
+}
