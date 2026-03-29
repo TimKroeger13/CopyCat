@@ -4,19 +4,31 @@ const cursorCanvas = document.getElementById("cursorCanvas");
 const cursorCtx    = cursorCanvas.getContext("2d");
 
 const MAX_INK      = 10000;
-const ERASER_RADIUS = 20;
+const ERASER_RADIUS = 30;
 
 let myRole      = null;
 let currentTool = "pen";
 let allStrokes  = [];
 let penSize     = 7;      // ← Pen Größe, anpassbar
 
-// --- Canvas Resize ---
+// CSS Dimensionen für Koordinaten-Berechnung
+let canvasWidth = 0, canvasHeight = 0;
+
 function resizeCanvas() {
-    canvas.width        = canvas.offsetWidth;
-    canvas.height       = canvas.offsetHeight;
-    cursorCanvas.width  = cursorCanvas.offsetWidth;
-    cursorCanvas.height = cursorCanvas.offsetHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvasWidth  = canvas.offsetWidth;
+    canvasHeight = canvas.offsetHeight;
+
+    // Canvas intern größer machen
+    canvas.width        = canvasWidth  * dpr;
+    canvas.height       = canvasHeight * dpr;
+    cursorCanvas.width  = canvasWidth  * dpr;
+    cursorCanvas.height = canvasHeight * dpr;
+
+    // Kontext skalieren damit Koordinaten gleich bleiben
+    ctx.scale(dpr, dpr);
+    cursorCtx.scale(dpr, dpr);
+
     redrawAll();
 }
 window.addEventListener("resize", resizeCanvas);
@@ -106,10 +118,8 @@ function updateInkBar(remaining, maxInk) {
     const bar = document.getElementById("inkBar");
     bar.style.width = Math.max(0, pct) + "%";
     bar.style.background = pct > 50 ? "#27ae60" : pct > 20 ? "#f39c12" : "#e74c3c";
-    document.getElementById("inkLabel").textContent =
-        `Ink: ${Math.round(remaining)} / ${Math.round(maxInk)}`;
+    document.getElementById("inkLabel").textContent = `Tinte: ${Math.round(pct)}%`;
 }
-
 function updateInkFromStrokes() {
     const used = allStrokes
         .filter(s => s.role === myRole)
@@ -125,8 +135,8 @@ function getColor(strokeRole) {
 
 function renderStroke(s) {
     ctx.beginPath();
-    ctx.moveTo(s.x0 * canvas.width,  s.y0 * canvas.height);
-    ctx.lineTo(s.x1 * canvas.width,  s.y1 * canvas.height);
+    ctx.moveTo(s.x0 * canvasWidth,  s.y0 * canvasHeight);
+    ctx.lineTo(s.x1 * canvasWidth,  s.y1 * canvasHeight);
     ctx.strokeStyle = getColor(s.role);
     ctx.lineWidth   = penSize;
     ctx.lineCap     = "round";
@@ -139,13 +149,24 @@ function redrawAll() {
 }
 
 // --- Eraser ---
+function pointToSegmentDistance(px, py, x0, y0, x1, y1) {
+    const dx = x1 - x0, dy = y1 - y0;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.hypot(px - x0, py - y0);
+    // t = wie weit entlang der Linie der nächste Punkt liegt (0-1)
+    let t = ((px - x0) * dx + (py - y0) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x0 + t * dx), py - (y0 + t * dy));
+}
+
+
 function findStrokesInRadius(px, py) {
     return allStrokes
         .filter(s => s.role === myRole)
         .filter(s => {
-            const mx = ((s.x0 + s.x1) / 2) * canvas.width;
-            const my = ((s.y0 + s.y1) / 2) * canvas.height;
-            return Math.hypot(mx - px, my - py) < ERASER_RADIUS;
+            const ax = s.x0 * canvasWidth,  ay = s.y0 * canvasHeight;
+            const bx = s.x1 * canvasWidth,  by = s.y1 * canvasHeight;
+            return pointToSegmentDistance(px, py, ax, ay, bx, by) < ERASER_RADIUS;
         })
         .map(s => s.id);
 }
@@ -242,10 +263,10 @@ function draw(e) {
             .reduce((sum, s) => sum + (s.length ?? 0), 0);
         if (used >= MAX_INK) return;
 
-        const x0 = lastX / canvas.width;
-        const y0 = lastY / canvas.height;
-        const x1 = pos.x  / canvas.width;
-        const y1 = pos.y  / canvas.height;
+        const x0 = lastX / canvasWidth;
+        const y0 = lastY / canvasHeight;
+        const x1 = pos.x  / canvasWidth;
+        const y1 = pos.y  / canvasHeight;
 
         // ← SOFORT lokal rendern
         const tempStroke = { x0, y0, x1, y1, role: myRole, length: 0 };
