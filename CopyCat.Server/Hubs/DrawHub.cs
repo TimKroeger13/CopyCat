@@ -16,6 +16,7 @@ public class DrawHub : Hub, IDrawHub
     private static readonly List<Stroke> _strokes = [];
     private static readonly HashSet<string> _newGameVotes = [];
     private const float MaxInk = 10000f;
+    private static readonly Dictionary<string, string> _roleToConnection = new();
 
     private static readonly string[] _words = File.Exists("Words.txt")
         ? File.ReadAllLines("Words.txt").Select(w => w.Trim()).Where(w => w.Length > 0).ToArray()
@@ -78,6 +79,47 @@ public class DrawHub : Hub, IDrawHub
         }
 
         await Clients.All.SendAsync("NewGameVoteUpdate", _newGameVotes.ToList());
+    }
+
+    public async Task JoinRole(string role)
+    {
+        // 1. "Actions have consequences": If someone (even you) enters the role, clear it
+        _strokes.RemoveAll(s => s.Role == role);
+
+        // 2. Kick the previous occupant if it's someone else
+        if (_roleToConnection.TryGetValue(role, out var oldConnectionId))
+        {
+            if (oldConnectionId != Context.ConnectionId)
+            {
+                await Clients.Client(oldConnectionId).SendAsync("Kicked");
+            }
+        }
+
+        // 3. Update the mapping (Remove user from any old roles first)
+        var existingEntry = _roleToConnection.FirstOrDefault(x => x.Value == Context.ConnectionId);
+        if (existingEntry.Key != null) _roleToConnection.Remove(existingEntry.Key);
+        
+        if (role != "guesser") 
+        {
+            _roleToConnection[role] = Context.ConnectionId;
+        }
+
+        // 4. Sync everything
+        await Clients.All.SendAsync("FullRedraw", _strokes);
+        await Clients.All.SendAsync("UpdateOccupiedRoles", _roleToConnection.Keys.ToList());
+        await Clients.Caller.SendAsync("RoleAccepted", role);
+    }
+
+    // Clean up roles when someone leaves
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var roleEntry = _roleToConnection.FirstOrDefault(x => x.Value == Context.ConnectionId);
+        if (roleEntry.Key != null)
+        {
+            _roleToConnection.Remove(roleEntry.Key);
+            await Clients.All.SendAsync("UpdateOccupiedRoles", _roleToConnection.Keys.ToList());
+        }
+        await base.OnDisconnectedAsync(exception);
     }
 
     public override async Task OnConnectedAsync()

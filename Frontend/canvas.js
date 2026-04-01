@@ -178,8 +178,41 @@ function findStrokesInRadius(px, py) {
         .map(s => s.id);
 }
 
-// --- Role ---
-function selectRole(role) {
+connection.on("Kicked", () => {
+    // Reset local state immediately to stop drawing
+    isDrawing = false;
+    myRole = null;
+    
+    // Force the UI back to the lobby
+    document.getElementById("roleScreen").style.display = "flex";
+    
+    // Use a slight delay for the alert so the DOM can repaint first
+    setTimeout(() => {
+        alert("Your spot was taken by another player!");
+    }, 50);
+});
+
+connection.on("RoleAccepted", (role) => {
+    finalizeRoleSelection(role);
+});
+
+connection.on("UpdateOccupiedRoles", (occupiedRoles) => {
+    // Bonus: Visual indicators
+    const buttons = document.querySelectorAll(".roleBtn");
+    buttons.forEach(btn => {
+        // Check which role this button represents
+        const role = btn.classList.contains("player1") ? "player1" : 
+                     btn.classList.contains("player2") ? "player2" : "guesser";
+        
+        if (occupiedRoles.includes(role)) {
+            btn.classList.add("occupied");
+        } else {
+            btn.classList.remove("occupied");
+        }
+    });
+});
+
+function finalizeRoleSelection(role) {
     myRole = role;
     document.getElementById("roleScreen").style.display = "none";
     document.getElementById("roleLabel").textContent =
@@ -188,14 +221,16 @@ function selectRole(role) {
 
     const isPlayer = role !== "guesser";
     canvas.style.pointerEvents = isPlayer ? "auto" : "none";
-    document.getElementById("inkWrapper").style.display    = isPlayer ? "flex" : "none";
-    document.getElementById("btnPen").style.display        = isPlayer ? "" : "none";
-    document.getElementById("btnEraser").style.display     = isPlayer ? "" : "none";
-    document.getElementById("btnClearMine").style.display  = isPlayer ? "" : "none";
-    document.getElementById("btnNewGame").style.display    = isPlayer ? "" : "none";
-
+    document.getElementById("inkWrapper").style.display = isPlayer ? "flex" : "none";
+    // ... rest of your UI toggles ...
+    
     resizeCanvas();
     updateInkFromStrokes();
+}
+
+// --- Role ---
+function selectRole(role) {
+    connection.invoke("JoinRole", role);
 }
 
 function changeRole() {
