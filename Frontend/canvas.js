@@ -117,8 +117,6 @@ connection.on("NewGameVoteUpdate", (votes) => { //here
     }
 });
 
-connection.start().catch(err => console.error(err));
-
 // --- Ink UI ---
 function updateInkBar(remaining, maxInk) {
     const pct = (remaining / maxInk) * 100;
@@ -179,17 +177,18 @@ function findStrokesInRadius(px, py) {
 }
 
 connection.on("Kicked", () => {
-    // Reset local state immediately to stop drawing
     isDrawing = false;
     myRole = null;
     
-    // Force the UI back to the lobby
+    // Switch UI
     document.getElementById("roleScreen").style.display = "flex";
     
-    // Use a slight delay for the alert so the DOM can repaint first
-    setTimeout(() => {
-        alert("Your spot was taken by another player!");
-    }, 50);
+    // Wait for the browser to actually draw the roleScreen before showing the alert
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            alert("Someone else took your spot!");
+        });
+    });
 });
 
 connection.on("RoleAccepted", (role) => {
@@ -197,13 +196,16 @@ connection.on("RoleAccepted", (role) => {
 });
 
 connection.on("UpdateOccupiedRoles", (occupiedRoles) => {
-    // Bonus: Visual indicators
+    console.log("Occupied roles updated:", occupiedRoles);
+    
     const buttons = document.querySelectorAll(".roleBtn");
     buttons.forEach(btn => {
-        // Check which role this button represents
-        const role = btn.classList.contains("player1") ? "player1" : 
-                     btn.classList.contains("player2") ? "player2" : "guesser";
-        
+        // Determine role based on class
+        let role = "";
+        if (btn.classList.contains("player1")) role = "player1";
+        else if (btn.classList.contains("player2")) role = "player2";
+        else if (btn.classList.contains("guesser")) role = "guesser";
+
         if (occupiedRoles.includes(role)) {
             btn.classList.add("occupied");
         } else {
@@ -234,6 +236,12 @@ function selectRole(role) {
 }
 
 function changeRole() {
+    // Notify server we are leaving the role so others can take it
+    if (myRole) {
+        connection.invoke("LeaveRole");
+    }
+    
+    myRole = null; // Reset local role
     document.getElementById("roleScreen").style.display = "flex";
 }
 
@@ -345,6 +353,10 @@ function draw(e) {
     lastX = pos.x;
     lastY = pos.y;
 }
+
+connection.start().then(() => {
+    console.log("Connected to Hub");
+}).catch(err => console.error(err));
 
 function stopDraw() { isDrawing = false; }
 

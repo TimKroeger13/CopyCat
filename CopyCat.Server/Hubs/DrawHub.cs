@@ -9,6 +9,7 @@ public interface IDrawHub
     Task ClearMyDrawing(string role);
     Task VoteNewGame(string role);
     Task RequestWords(string role);
+    Task LeaveRole(); // <--- Added this
 }
 
 public class DrawHub : Hub, IDrawHub
@@ -110,6 +111,17 @@ public class DrawHub : Hub, IDrawHub
         await Clients.Caller.SendAsync("RoleAccepted", role);
     }
 
+    public async Task LeaveRole()
+    {
+        var existingEntry = _roleToConnection.FirstOrDefault(x => x.Value == Context.ConnectionId);
+        if (existingEntry.Key != null)
+        {
+            _roleToConnection.Remove(existingEntry.Key);
+            // Notify all clients that a role is now free
+            await Clients.All.SendAsync("UpdateOccupiedRoles", _roleToConnection.Keys.ToList());
+        }
+    }
+
     // Clean up roles when someone leaves
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
@@ -124,8 +136,12 @@ public class DrawHub : Hub, IDrawHub
 
     public override async Task OnConnectedAsync()
     {
+        // Send the current list of occupied roles only to the new caller
+        await Clients.Caller.SendAsync("UpdateOccupiedRoles", _roleToConnection.Keys.ToList());
+        
+        // Also send the current strokes so the canvas isn't empty if a game is in progress
         await Clients.Caller.SendAsync("FullRedraw", _strokes);
-        await Clients.Caller.SendAsync("NewGameVoteUpdate", _newGameVotes.ToList());
+
         await base.OnConnectedAsync();
     }
 }
