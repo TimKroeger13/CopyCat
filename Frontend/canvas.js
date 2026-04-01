@@ -90,15 +90,21 @@ connection.on("ReceiveLine", (stroke) => {
 
 connection.on("FullRedraw", (strokes) => {
     allStrokes = strokes;
+    debugger;
     redrawAll();
     if (myRole) updateInkFromStrokes();
+});
+
+connection.on("GameReset", () => {
+    debugger;
+    connection.invoke("RequestWords", myRole);
 });
 
 connection.on("InkUpdate", (remaining, maxInk) => {
     updateInkBar(remaining, maxInk);
 });
 
-connection.on("NewGameVoteUpdate", (votes) => {
+connection.on("NewGameVoteUpdate", (votes) => { //here
     const myVoteActive = votes.includes(myRole);
     document.getElementById("btnNewGame").classList.toggle("active", myVoteActive);
     const hint = document.getElementById("newGameHint");
@@ -190,10 +196,6 @@ function selectRole(role) {
 
     resizeCanvas();
     updateInkFromStrokes();
-
-    if (isPlayer) {
-        connection.invoke("RequestWords", myRole);
-    }
 }
 
 function changeRole() {
