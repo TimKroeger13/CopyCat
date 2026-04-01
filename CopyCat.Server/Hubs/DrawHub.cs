@@ -8,25 +8,39 @@ public interface IDrawHub
     Task EraseStrokes(List<string> ids, string role);
     Task ClearMyDrawing(string role);
     Task VoteNewGame(string role);
+    Task RequestWords(string role);
 }
 
 public class DrawHub : Hub, IDrawHub
 {
     private static readonly List<Stroke> _strokes = [];
     private static readonly HashSet<string> _newGameVotes = [];
-    private const float MaxInk = 10000f; // Pixel
+    private const float MaxInk = 10000f;
+
+    private static readonly string[] _words = File.Exists("Words.txt")
+        ? File.ReadAllLines("Words.txt").Select(w => w.Trim()).Where(w => w.Length > 0).ToArray()
+        : ["Katze", "Haus", "Auto", "Baum", "Hund"]; // Fallback
 
     private static float GetUsedInk(string role) =>
         _strokes.Where(s => s.Role == role).Sum(s => s.Length);
+
+    private static string[] GetRandomWords(int count)
+    {
+        return _words.OrderBy(_ => Guid.NewGuid()).Take(count).ToArray();
+    }
+
+    public async Task RequestWords(string role)
+    {
+        if (role == "guesser") return;
+        await Clients.Caller.SendAsync("ReceiveWordOptions", GetRandomWords(3));
+    }
 
     public async Task DrawLine(float x0, float y0, float x1, float y1, string role)
     {
         float used = GetUsedInk(role);
         if (used >= MaxInk) return;
 
-        // Länge des Segments in normalisierten Koordinaten → Pixel (nehmen wir 1000x1000 als Referenz)
         float length = MathF.Sqrt(MathF.Pow((x1 - x0) * 1000, 2) + MathF.Pow((y1 - y0) * 1000, 2));
-
         var stroke = new Stroke(Guid.NewGuid().ToString(), x0, y0, x1, y1, role, length);
         _strokes.Add(stroke);
 
@@ -60,6 +74,7 @@ public class DrawHub : Hub, IDrawHub
             _strokes.Clear();
             _newGameVotes.Clear();
             await Clients.All.SendAsync("FullRedraw", _strokes);
+            await Clients.All.SendAsync("GameReset"); // ← Clients holen sich Wörter
         }
 
         await Clients.All.SendAsync("NewGameVoteUpdate", _newGameVotes.ToList());

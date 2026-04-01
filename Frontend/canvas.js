@@ -10,6 +10,7 @@ let myRole      = null;
 let currentTool = "pen";
 let allStrokes  = [];
 let penSize     = 7;      // ← Pen Größe, anpassbar
+let myWord = null;
 
 // CSS Dimensionen für Koordinaten-Berechnung
 let canvasWidth = 0, canvasHeight = 0;
@@ -189,6 +190,10 @@ function selectRole(role) {
 
     resizeCanvas();
     updateInkFromStrokes();
+
+    if (isPlayer) {
+        connection.invoke("RequestWords", myRole);
+    }
 }
 
 function changeRole() {
@@ -236,6 +241,30 @@ function startDraw(e) {
     const pos = getPos(e);
     lastX = pos.x;
     lastY = pos.y;
+}
+
+connection.on("ReceiveWordOptions", (words) => {
+    const screen = document.getElementById("wordScreen");
+    const container = document.getElementById("wordOptions");
+    container.innerHTML = "";
+
+    words.forEach(word => {
+        const btn = document.createElement("button");
+        btn.className = "wordBtn";
+        btn.textContent = word;
+        btn.onclick = () => selectWord(word);
+        container.appendChild(btn);
+    });
+
+    screen.style.display = "flex";
+});
+
+function selectWord(word) {
+    myWord = word;
+    document.getElementById("wordScreen").style.display = "none";
+    // Optional: Wort in der TopBar anzeigen
+    document.getElementById("roleLabel").textContent =
+        myRole === "player1" ? `✏️ P1: ${word}` : `✏️ P2: ${word}`;
 }
 
 function draw(e) {

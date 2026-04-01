@@ -305,3 +305,62 @@ canvas.eraser { cursor: none; }
     border-radius: 5px;
     overflow: hidden;
 }
+
+/* --- Word Screen --- */
+#wordScreen {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 46, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 9;
+}
+
+#wordScreen h2 {
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+#wordOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wordBtn {
+    width: 260px;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: #0f3460;
+    color: white;
+    transition: background 0.15s;
+    letter-spacing: 2px;
+}
+
+.wordBtn:hover {
+    background: #1a5490;
+}
+
+/* --- New Game Button kleiner auf Mobile --- */
+@media (max-width: 480px) {
+    #btnNewGame {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+    #btnClearMine {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+    #btnPen, #btnEraser {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+}
