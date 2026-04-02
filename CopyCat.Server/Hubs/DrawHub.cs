@@ -18,6 +18,7 @@ public class DrawHub : Hub, IDrawHub
     private static readonly HashSet<string> _newGameVotes = [];
     private const float MaxInk = 10000f;
     private static readonly Dictionary<string, string> _roleToConnection = new();
+    private static readonly Dictionary<string, string> _selectedWords = new();
 
     private static readonly string[] _words = File.Exists("Words.txt")
         ? File.ReadAllLines("Words.txt").Select(w => w.Trim()).Where(w => w.Length > 0).ToArray()
@@ -35,6 +36,22 @@ public class DrawHub : Hub, IDrawHub
     {
         if (role == "guesser") return;
         await Clients.Caller.SendAsync("ReceiveWordOptions", GetRandomWords(3));
+    }
+
+    public async Task ConfirmWordSelected(string role)
+    {
+        _selectedWords[role] = role; // nur tracken dass gewählt wurde
+
+        if (_selectedWords.ContainsKey("player1") && _selectedWords.ContainsKey("player2"))
+        {
+            _selectedWords.Clear();
+            // Countdown starten – Client zählt selbst runter
+            await Clients.All.SendAsync("StartCountdown", 3);
+        }
+        else
+        {
+            await Clients.Caller.SendAsync("WaitingForWord");
+        }
     }
 
     public async Task DrawLine(float x0, float y0, float x1, float y1, string role)
@@ -75,6 +92,7 @@ public class DrawHub : Hub, IDrawHub
         {
             _strokes.Clear();
             _newGameVotes.Clear();
+            _selectedWords.Clear();
             await Clients.All.SendAsync("FullRedraw", _strokes);
             await Clients.All.SendAsync("GameReset"); // ← Clients holen sich Wörter
         }

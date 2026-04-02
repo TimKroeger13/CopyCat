@@ -100,13 +100,11 @@ connection.on("ReceiveLine", (stroke) => {
 
 connection.on("FullRedraw", (strokes) => {
     allStrokes = strokes;
-    debugger;
     redrawAll();
     if (myRole) updateInkFromStrokes();
 });
 
 connection.on("GameReset", () => {
-    debugger;
     connection.invoke("RequestWords", myRole);
 });
 
@@ -114,16 +112,15 @@ connection.on("InkUpdate", (remaining, maxInk) => {
     updateInkBar(remaining, maxInk);
 });
 
-connection.on("NewGameVoteUpdate", (votes) => { //here
+connection.on("NewGameVoteUpdate", (votes) => {
     const myVoteActive = votes.includes(myRole);
     document.getElementById("btnNewGame").classList.toggle("active", myVoteActive);
-    const hint = document.getElementById("newGameHint");
-    if (votes.length === 0) {
-        hint.textContent = "";
-    } else if (votes.includes("player1") && !votes.includes("player2")) {
-        hint.textContent = "⏳ Waiting for Player 2...";
-    } else if (votes.includes("player2") && !votes.includes("player1")) {
-        hint.textContent = "⏳ Waiting for Player 1...";
+
+    if (myVoteActive && votes.length === 1) {
+        // Ich habe gevoted, warte auf anderen
+        document.getElementById("newGameModal").style.display = "flex";
+    } else {
+        document.getElementById("newGameModal").style.display = "none";
     }
 });
 
@@ -220,16 +217,23 @@ function finalizeRoleSelection(role) {
     myRole = role;
     document.getElementById("roleScreen").style.display = "none";
     document.getElementById("roleLabel").textContent =
-        role === "player1" ? "✏️ Player 1" :
-        role === "player2" ? "✏️ Player 2" : "🔍 Guesser";
+        role === "player1" ? "Player 1" :
+        role === "player2" ? "Player 2" : "Guesser";
 
     const isPlayer = role !== "guesser";
     canvas.style.pointerEvents = isPlayer ? "auto" : "none";
-    document.getElementById("inkWrapper").style.display = isPlayer ? "flex" : "none";
-    // ... rest of your UI toggles ...
-    
+    document.getElementById("inkWrapper").style.display    = isPlayer ? "flex" : "none";
+    document.getElementById("btnPen").style.display        = isPlayer ? "" : "none";
+    document.getElementById("btnEraser").style.display     = isPlayer ? "" : "none";
+    document.getElementById("btnClearMine").style.display  = isPlayer ? "" : "none";
+    document.getElementById("btnNewGame").style.display    = isPlayer ? "" : "none";
+
     resizeCanvas();
     updateInkFromStrokes();
+
+    if (isPlayer) {
+        connection.invoke("RequestWords", role);
+    }
 }
 
 // --- Role ---
@@ -268,6 +272,11 @@ function clearMine() {
 function voteNewGame() {
     if (!myRole || myRole === "guesser") return;
     connection.invoke("VoteNewGame", myRole);
+}
+
+function cancelNewGame() {
+    document.getElementById("newGameModal").style.display = "none";
+    connection.invoke("VoteNewGame", myRole); // Toggle off
 }
 
 // --- Drawing ---
@@ -309,10 +318,37 @@ connection.on("ReceiveWordOptions", (words) => {
 function selectWord(word) {
     myWord = word;
     document.getElementById("wordScreen").style.display = "none";
-    // Optional: Wort in der TopBar anzeigen
     document.getElementById("roleLabel").textContent =
         myRole === "player1" ? `✏️ P1: ${word}` : `✏️ P2: ${word}`;
+
+    // Server informieren dass Wort gewählt
+    connection.invoke("ConfirmWordSelected", myRole);
 }
+
+connection.on("WaitingForWord", () => {
+    // Eigenes Wort schon gewählt, warten auf anderen
+    showMessage("✅ Word choosen!\n\nWaiting for the other player...");
+});
+
+connection.on("StartCountdown", (seconds) => {
+    hideMessage(); // WaitingForWord Message schließen falls offen
+    const overlay = document.getElementById("countdownOverlay");
+    const num = document.getElementById("countdownNumber");
+    overlay.style.display = "flex";
+    let count = seconds;
+    num.textContent = count;
+
+    const interval = setInterval(() => {
+        count--;
+        if (count <= 0) {
+            clearInterval(interval);
+            overlay.style.display = "none";
+            // Spiel startet – Zeichnen freischalten
+        } else {
+            num.textContent = count;
+        }
+    }, 1000);
+});
 
 function draw(e) {
     const pos = getPos(e);

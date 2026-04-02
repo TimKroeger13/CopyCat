@@ -49,8 +49,20 @@
         <button id="btnEraser"                   onclick="setTool('eraser')">🧽</button>
         <button id="btnClearMine"                onclick="clearMine()">🗑️</button>
         <button id="btnNewGame"                  onclick="voteNewGame()">🆕</button>
-        <div id="newGameHint"></div>
     </div>
+
+
+    <div id="newGameModal" style="display:none">
+        <div id="newGameModalInner">
+            <p>Waiting for the other player...</p>
+            <button onclick="cancelNewGame()">Cancel</button>
+        </div>
+    </div>
+    <div id="countdownOverlay" style="display:none">
+        <div id="countdownNumber">3</div>
+    </div>
+
+
     <script src="Frontend/canvas.js"></script>
 </body>
 </html>

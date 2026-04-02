@@ -433,3 +433,68 @@ canvas.eraser { cursor: none; }
     cursor: pointer;
     min-height: 44px;
 }
+
+/* --- New Game Modal --- */
+#newGameModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+}
+
+#newGameModalInner {
+    background: #16213e;
+    border: 1px solid #27ae60;
+    border-radius: 16px;
+    padding: 32px 28px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+#newGameModalInner p {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+#newGameModalInner button {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    background: #c0392b;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+/* --- Countdown --- */
+#countdownOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;
+}
+
+#countdownNumber {
+    color: white;
+    font-size: 8rem;
+    font-weight: bold;
+    animation: countPulse 1s ease-in-out infinite;
+}
+
+@keyframes countPulse {
+    0%   { transform: scale(1);    opacity: 1; }
+    50%  { transform: scale(1.2);  opacity: 0.8; }
+    100% { transform: scale(1);    opacity: 1; }
+}
