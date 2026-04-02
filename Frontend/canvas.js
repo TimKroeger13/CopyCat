@@ -69,6 +69,16 @@ function clearCursor() {
     cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height);
 }
 
+// nach clearCursor()
+function showMessage(text) {
+    document.getElementById("messageBoxText").textContent = text;
+    document.getElementById("messageBox").style.display = "flex";
+}
+
+function hideMessage() {
+    document.getElementById("messageBox").style.display = "none";
+}
+
 // --- SignalR ---
 const serverUrl = window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
@@ -179,16 +189,8 @@ function findStrokesInRadius(px, py) {
 connection.on("Kicked", () => {
     isDrawing = false;
     myRole = null;
-    
-    // Switch UI
     document.getElementById("roleScreen").style.display = "flex";
-    
-    // Wait for the browser to actually draw the roleScreen before showing the alert
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            alert("Someone else took your spot!");
-        });
-    });
+    showMessage("Someone took your place!");
 });
 
 connection.on("RoleAccepted", (role) => {
