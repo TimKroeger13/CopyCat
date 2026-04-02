@@ -137,7 +137,7 @@ function updateInkBar(remaining, maxInk) {
     const bar = document.getElementById("inkBar");
     bar.style.width = Math.max(0, pct) + "%";
     bar.style.background = pct > 50 ? "#27ae60" : pct > 20 ? "#f39c12" : "#e74c3c";
-    document.getElementById("inkLabel").textContent = `Tinte: ${Math.round(pct)}%`;
+    document.getElementById("inkLabel").textContent = `Ink: ${Math.round(pct)}%`;
 }
 function updateInkFromStrokes() {
     const used = allStrokes
