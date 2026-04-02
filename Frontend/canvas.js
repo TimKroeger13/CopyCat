@@ -72,6 +72,13 @@ function clearCursor() {
 // nach clearCursor()
 function showMessage(text) {
     document.getElementById("messageBoxText").textContent = text;
+    document.getElementById("messageBoxBtn").style.display = "block";  // OK Button sichtbar
+    document.getElementById("messageBox").style.display = "flex";
+}
+
+function showBlockingMessage(text) {
+    document.getElementById("messageBoxText").textContent = text;
+    document.getElementById("messageBoxBtn").style.display = "none";   // OK Button versteckt
     document.getElementById("messageBox").style.display = "flex";
 }
 
@@ -230,10 +237,6 @@ function finalizeRoleSelection(role) {
 
     resizeCanvas();
     updateInkFromStrokes();
-
-    if (isPlayer) {
-        connection.invoke("RequestWords", role);
-    }
 }
 
 // --- Role ---
@@ -326,8 +329,7 @@ function selectWord(word) {
 }
 
 connection.on("WaitingForWord", () => {
-    // Eigenes Wort schon gewählt, warten auf anderen
-    showMessage("✅ Word choosen!\n\nWaiting for the other player...");
+    showBlockingMessage("Word chosen!\n\nWaiting for the other player...");
 });
 
 connection.on("StartCountdown", (seconds) => {
